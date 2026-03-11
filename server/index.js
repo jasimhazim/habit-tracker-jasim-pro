@@ -267,7 +267,8 @@ Allowed Action Types:
 1. { "type": "update_calories", "value": 500 } // Adds 500 to current
 2. { "type": "check_habit", "habit": "Gym", "day": "Wed" } // Checks off a habit for a short day name (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
 3. { "type": "update_weight", "value": 78.5 } // Sets current weight
-4. { "type": "chat", "message": "تم التنفيذ يا بطل" } // A friendly arabic text message to show the user
+4. { "type": "update_setting", "key": "settings:budget", "value": "2200" } // Use "settings:budget" for budget and "settings:study" for study hours
+5. { "type": "chat", "message": "تم التنفيذ يا بطل" } // A friendly arabic text message to show the user
 
 Current Context:
 ${JSON.stringify(context)}`;
@@ -329,6 +330,13 @@ ${JSON.stringify(context)}`;
            where: { userId_key: { userId: req.userId, key } },
            update: { completed: true },
            create: { userId: req.userId, key, completed: true }
+        });
+      }
+      else if (action.type === 'update_setting') {
+        await prisma.setting.upsert({
+          where: { userId_key: { userId: req.userId, key: action.key } },
+          update: { value: String(action.value) },
+          create: { userId: req.userId, key: action.key, value: String(action.value) }
         });
       }
     }
