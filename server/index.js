@@ -4,6 +4,9 @@ import dotenv from 'dotenv';
 import { Configuration, PlaidApi, PlaidEnvironments } from 'plaid';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -13,6 +16,68 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+const prisma = new PrismaClient();
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-for-dev';
+
+// Middleware to protect routes
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (e) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// --- AUTHENTICATION ROUTES ---
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password, displayName, profilePictureUrl } = req.body;
+    
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) return res.status(400).json({ error: 'Email already exists' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { email, passwordHash, displayName, profilePictureUrl: profilePictureUrl || null }
+    });
+
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, email: user.email, displayName: user.displayName, profilePictureUrl: user.profilePictureUrl } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
+
+    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user.id, email: user.email, displayName: user.displayName, profilePictureUrl: user.profilePictureUrl } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/auth/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.userId } });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user: { id: user.id, email: user.email, displayName: user.displayName, profilePictureUrl: user.profilePictureUrl } });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET = process.env.PLAID_SECRET;
@@ -95,11 +160,10 @@ app.get('/api/transactions', async (req, res) => {
 app.post('/api/agent', async (req, res, next) => {
   try {
     const { prompt, context } = req.body;
-    // User provided the Gemini key directly, so we'll use it as fallback if not in ENV
-    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyDCMq8GZnnUDy9ZLiLWYduQlLpoecTNiZQ';
+    const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return res.status(500).json({ error: 'GEMINI_API_KEY is missing.' });
+      return res.status(500).json({ error: 'GEMINI_API_KEY is missing. Please add it to your environment variables.' });
     }
 
     const systemPrompt = `You are a high-end personal assistant AI integrated into a premium Habit and Goals tracker dashboard.
