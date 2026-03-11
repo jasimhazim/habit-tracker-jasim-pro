@@ -1,35 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import TrackerView from './TrackerView';
 import GoalsView from './GoalsView';
 import RulesView from './RulesView';
 import WealthView from './WealthView';
 import HealthView from './HealthView';
 import BottomNav from './BottomNav';
-import Login from './Login';
 import TopHeader from './TopHeader';
 
-export default function MobileApp() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export default function MobileApp({ user }) {
   const [activeTab, setActiveTab] = useState('tracker'); // tracker, health, wealth, goals, rules
   const [streak, setStreak] = useState(0);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await window.storage?.get("tracker:auth");
-        if (res && res.value === "true") setIsAuthenticated(true);
-      } catch { /* ignore */ }
-    };
-    checkAuth();
-  }, []);
-
-  if (!isAuthenticated) {
-    return <Login onLogin={() => setIsAuthenticated(true)} />;
-  }
+  const handleLogout = () => {
+    localStorage.removeItem('pro_token');
+    localStorage.removeItem('pro_user');
+    window.location.reload();
+  };
 
   return (
     <div className="app-container">
-      <TopHeader streak={streak} onLogout={() => setIsAuthenticated(false)} />
+      <TopHeader streak={streak} user={user} onLogout={handleLogout} />
       
       <div style={{ paddingBottom: '90px' }}>
         {activeTab === 'tracker' && <TrackerView updateStreak={setStreak} />}

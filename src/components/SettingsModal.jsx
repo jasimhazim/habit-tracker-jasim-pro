@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, X, Save, ShieldCheck } from 'lucide-react';
+import { Settings as SettingsIcon, X, Save, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
   const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "75" });
@@ -10,37 +10,65 @@ export default function SettingsModal({ onClose }) {
   });
   const [budget, setBudget] = useState(2000);
   const [studyHours, setStudyHours] = useState(40);
+  const [profilePic, setProfilePic] = useState('');
 
   useEffect(() => {
     const load = async () => {
       try {
-        const wRes = await window.storage?.get(`health:weights`);
-        if (wRes) setWeights(JSON.parse(wRes.value));
-        const gRes = await window.storage?.get(`goals:data`);
-        if (gRes) setGoals(JSON.parse(gRes.value));
-        const bRes = await window.storage?.get(`settings:budget`);
-        if (bRes) setBudget(Number(bRes.value));
-        const sRes = await window.storage?.get(`settings:study`);
-        if (sRes) setStudyHours(Number(sRes.value));
-      } catch {}
+        const token = localStorage.getItem('pro_token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        // Load Settings
+        const res = await fetch('/api/data/settings', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data['health:weights']) setWeights(JSON.parse(data['health:weights']));
+          if (data['goals:data']) setGoals(JSON.parse(data['goals:data']));
+          if (data['settings:budget']) setBudget(Number(data['settings:budget']));
+          if (data['settings:study']) setStudyHours(Number(data['settings:study']));
+        }
+
+        // Load Profile
+        const meRes = await fetch('/api/auth/me', { headers });
+        if (meRes.ok) {
+          const meData = await meRes.json();
+          if (meData.user?.profilePictureUrl) setProfilePic(meData.user.profilePictureUrl);
+        }
+      } catch (e) { console.error('Failed to load settings', e); }
     };
     load();
   }, []);
 
   const handleSave = async () => {
     try {
-      await window.storage?.set(`health:weights`, JSON.stringify(weights));
-      await window.storage?.set(`goals:data`, JSON.stringify(goals));
-      await window.storage?.set(`settings:budget`, budget.toString());
-      await window.storage?.set(`settings:study`, studyHours.toString());
-      // Reload page to reflect settings everywhere easily
+      const token = localStorage.getItem('pro_token');
+      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+      
+      const saveKey = async (key, value) => {
+        await fetch('/api/data/settings', { method: 'POST', headers, body: JSON.stringify({ key, value }) });
+      };
+
+      await saveKey('health:weights', JSON.stringify(weights));
+      await saveKey('goals:data', JSON.stringify(goals));
+      await saveKey('settings:budget', budget.toString());
+      await saveKey('settings:study', studyHours.toString());
+      
+      // Save Profile Picture to backend database natively
+      if (profilePic) {
+        await fetch('/api/auth/update', {
+           method: 'POST',
+           headers,
+           body: JSON.stringify({ profilePictureUrl: profilePic })
+        });
+      }
+
       window.location.reload();
     } catch (e) {
       console.error(e);
     }
   };
 
-  const InputRow = ({ label, type = "text", value, onChange, unit }) => (
+  const InputRow = ({ label, type = "text", value, onChange, unit, placeholder }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
       <label style={{ color: '#e4e4e7', fontSize: 14, fontWeight: 700, fontFamily: "'Tajawal', sans-serif" }}>{label}</label>
       <div style={{ position: 'relative', width: '50%' }}>
@@ -48,6 +76,7 @@ export default function SettingsModal({ onClose }) {
           type={type} 
           value={value || ''} 
           onChange={onChange}
+          placeholder={placeholder}
           style={{ 
             width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', 
             borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, fontFamily: "'JetBrains Mono'", outline: 'none'
@@ -92,6 +121,13 @@ export default function SettingsModal({ onClose }) {
         </div>
 
         <div style={{ padding: 32, flex: 1 }}>
+          <div style={{ marginBottom: 32 }}>
+            <h3 style={{ fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: '#a855f7', margin: '0 0 16px', borderBottom: '1px solid rgba(168,85,247,0.2)', paddingBottom: 8 }}>
+              <ImageIcon size={18} /> تخصيص الحساب
+            </h3>
+            <InputRow label="رابط الصورة الشخصية (Avatar URL)" type="text" value={profilePic} onChange={e => setProfilePic(e.target.value)} placeholder="https://example.com/avatar.jpg" />
+          </div>
+
           <div style={{ marginBottom: 32 }}>
             <h3 style={{ fontSize: 16, color: '#f59e0b', margin: '0 0 16px', borderBottom: '1px solid rgba(245,158,11,0.2)', paddingBottom: 8 }}>المقاييس الصحية (Weight)</h3>
             <InputRow label="وزن البداية" type="number" value={weights.start} onChange={e => setWeights({...weights, start: e.target.value})} unit="kg" />

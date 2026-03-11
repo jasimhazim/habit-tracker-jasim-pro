@@ -12,24 +12,47 @@ const mockWeightData = [
 ];
 
 export default function HealthView() {
-  const [weights, setWeights] = useState({ start: "", current: "", goal: "" });
+  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "75" });
   const [calories, setCalories] = useState({ eaten: 0, goal: 2000 });
-  const weightsKey = `health:weights`;
 
   useEffect(() => {
     const load = async () => {
       try {
-        const wRes = await window.storage?.get(weightsKey);
-        setWeights(wRes ? JSON.parse(wRes.value) : { start: "85", current: "79.8", goal: "75" });
-      } catch { setWeights({ start: "85", current: "79.8", goal: "75" }); }
+        const token = localStorage.getItem('pro_token');
+        const headers = { 'Authorization': `Bearer ${token}` };
+        
+        // 1. Get settings for weight goals
+        const sRes = await fetch('/api/data/settings', { headers });
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          if (sData['health:weights']) setWeights(JSON.parse(sData['health:weights']));
+        }
+
+        // 2. Get today's health log
+        const hRes = await fetch('/api/data/health', { headers });
+        if (hRes.ok) {
+          const hData = await hRes.json();
+          setCalories(p => ({ ...p, eaten: hData.calories || 0 }));
+        }
+      } catch (e) { console.error(e); }
     };
     load();
-  }, [weightsKey]);
+  }, []);
 
-  const updateWeight = async (field, val) => {
-    const next = { ...weights, [field]: val };
-    setWeights(next);
-    try { await window.storage?.set(weightsKey, JSON.stringify(next)); } catch (e) {}
+  const addCalories = async () => {
+    const nextEaten = calories.eaten + 200;
+    setCalories(p => ({ ...p, eaten: nextEaten }));
+    try {
+      const token = localStorage.getItem('pro_token');
+      await fetch('/api/data/health', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ calories: nextEaten })
+      });
+    } catch (e) {
+      console.error(e);
+      setCalories(p => ({ ...p, eaten: p.eaten - 200 }));
+    }
   };
 
   const calPct = Math.min((calories.eaten / calories.goal) * 100, 100);
@@ -51,7 +74,7 @@ export default function HealthView() {
             </div>
           </div>
           <button 
-            onClick={() => setCalories(p => ({...p, eaten: p.eaten + 200}))}
+            onClick={addCalories}
             style={{ background: '#10b981', color: '#000', border: 'none', borderRadius: 12, padding: '8px 16px', fontWeight: 800, cursor: 'pointer', fontFamily: "'JetBrains Mono'" }}>
             +200
           </button>

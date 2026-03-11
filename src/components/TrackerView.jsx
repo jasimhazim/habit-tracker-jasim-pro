@@ -17,55 +17,68 @@ export default function TrackerView({ updateStreak }) {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await window.storage?.get(storageKey);
-        setData(res ? JSON.parse(res.value) : {});
-      } catch { setData({}); }
+        const token = localStorage.getItem('pro_token');
+        const res = await fetch('/api/data/habits', { headers: { 'Authorization': `Bearer ${token}` } });
+        if (res.ok) {
+          setData(await res.json());
+        }
+      } catch (e) { console.error("Failed to load habits", e); }
       setLoading(false);
     };
     load();
-  }, [storageKey]);
+  }, []); // Only load once, then use local state
 
-  // Compute streak
+  // Compute streak (mocked for now, just based on total current completions)
   useEffect(() => {
-    const computeStreak = async () => {
-      let s = 0;
-      for (let i = 0; i >= -52; i--) {
-        const wk = getWeekKey(i);
-        const key = `tracker:${wk}`;
-        try {
-          const res = await window.storage?.get(key);
-          if (res) {
-            const d = JSON.parse(res.value);
-            const total = Object.values(d).filter(Boolean).length;
-            if (total >= 40) s++;
-            else if (i < 0) break;
-          } else if (i < 0) break;
-        } catch { if (i < 0) break; }
-      }
-      setStreak(s);
-      if (updateStreak) updateStreak(s);
-    };
-    computeStreak();
-  }, [data, weekOffset, updateStreak]);
+    const total = Object.values(data).filter(Boolean).length;
+    let s = 0;
+    if (total > 2) s = 1;
+    if (total > 10) s = 2;
+    if (total > 20) s = 3;
+    setStreak(s);
+    if (updateStreak) updateStreak(s);
+  }, [data, updateStreak]);
 
   const toggle = useCallback(async (habitId, dayIdx) => {
-    const key = `${habitId}-${dayIdx}`;
+    // Determine exact key based on current week offset and day
+    const key = `w${weekOffset}-${habitId}-${dayIdx}`;
+    
     setAnimatingCell(key);
     setTimeout(() => setAnimatingCell(null), 300);
-    const next = { ...data, [key]: !data[key] };
-    setData(next);
-    try { await window.storage?.set(storageKey, JSON.stringify(next)); } catch (e) { console.error(e); }
-  }, [data, storageKey]);
+    
+    const nextVal = !data[key];
+    setData(prev => ({ ...prev, [key]: nextVal }));
+    
+    try {
+      const token = localStorage.getItem('pro_token');
+      await fetch('/api/data/habits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ key, completed: nextVal })
+      });
+    } catch (e) {
+      console.error(e);
+      // Revert on failure
+      setData(prev => ({ ...prev, [key]: !nextVal }));
+    }
+  }, [data, weekOffset]);
 
   const totalChecked = Object.values(data).filter(Boolean).length;
   const maxScore = HABITS.length * 7;
-  const pct = Math.round((totalChecked / maxScore) * 100);
+  // Calculate PCT based purely on this week's visible data
+  const weeklyChecked = HABITS.reduce((acc, h) => {
+    return acc + DAYS.reduce((sum, _, i) => sum + (data[`w${weekOffset}-${h.id}-${i}`] ? 1 : 0), 0);
+  }, 0);
+  const pct = Math.round((weeklyChecked / maxScore) * 100);
 
   const todayDayIdx = getTodayDayIdx();
   const isCurrentWeek = weekOffset === 0;
 
-  const getHabitScore = (habitId) => DAYS.reduce((sum, _, i) => sum + (data[`${habitId}-${i}`] ? 1 : 0), 0);
-  const getDayScore = (dayIdx) => HABITS.reduce((sum, h) => sum + (data[`${h.id}-${dayIdx}`] ? 1 : 0), 0);
+  const getHabitScore = (habitId) => DAYS.reduce((sum, _, i) => sum + (data[`w${weekOffset}-${habitId}-${i}`] ? 1 : 0), 0);
+  const getDayScore = (dayIdx) => HABITS.reduce((sum, h) => sum + (data[`w${weekOffset}-${h.id}-${dayIdx}`] ? 1 : 0), 0);
 
   return (
     <div className="fade-up-1">

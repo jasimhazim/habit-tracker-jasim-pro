@@ -13,38 +13,6 @@ export default function AIAgent() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const executeAction = async (action) => {
-    try {
-      if (action.type === 'update_calories') {
-        // Mock execution assuming standard storage
-        const wRes = await window.storage?.get('health:weights');
-        if (!wRes) return;
-        // In a real app we would have a dedicated calories storage separated from weights, but adapting to our current setup
-        console.log("AI executing:", action);
-        return `تم تفعيل إجراء السعرات (${action.value} kcal). يرجى تحديث الصفحة.`;
-      }
-      if (action.type === 'update_weight') {
-        const wRes = await window.storage?.get('health:weights');
-        const weights = wRes ? JSON.parse(wRes.value) : { start: '85', current: '79', goal: '75' };
-        weights.current = String(action.value);
-        await window.storage?.set('health:weights', JSON.stringify(weights));
-        return `تم تحديث الوزن الحالي إلى ${action.value} kg. يرجى التحديث.`;
-      }
-      if (action.type === 'check_habit') {
-        const hRes = await window.storage?.get(`tracker:habits`);
-        const habits = hRes ? JSON.parse(hRes.value) : {};
-        const key = `${action.day.toLowerCase()}-${action.habit.toLowerCase()}`;
-        habits[key] = true;
-        await window.storage?.set(`tracker:habits`, JSON.stringify(habits));
-        return `تم تسجيل إنجاز عادة ${action.habit} ليوم ${action.day}. يرجى التحديث.`;
-      }
-      return "تم تنفيذ الإجراء.";
-    } catch (e) {
-      console.error(e);
-      return "حدث خطأ أثناء التنفيذ.";
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
@@ -55,15 +23,18 @@ export default function AIAgent() {
     setIsLoading(true);
 
     try {
-      // Gather generic context for the AI
       const context = {
         habits: ['Gym', 'Diet', 'Study', 'Sleep', 'Water', 'Tidy', 'Phone', 'Spend'],
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
       };
 
+      const token = localStorage.getItem('pro_token');
       const res = await fetch('/api/agent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify({ prompt: userMsg, context })
       });
 
@@ -76,20 +47,20 @@ export default function AIAgent() {
       }
 
       if (data.actions && data.actions.length > 0) {
-        let results = [];
-        for (const action of data.actions) {
-          const resText = await executeAction(action);
-          results.push(resText);
-          // Auto-reload to show AI changes
-          setTimeout(() => window.location.reload(), 2000);
-        }
-        setMessages(p => [...p, { role: 'system', text: `تم التنفيذ! \n${results.join(', ')}` }]);
+        // Look for chat message to display
+        const chatAction = data.actions.find(a => a.type === 'chat');
+        const replyText = chatAction ? chatAction.message : "تم تنفيذ طلبك بنجاح! 🚀";
+        
+        setMessages(p => [...p, { role: 'system', text: replyText }]);
+        
+        // Auto-reload after a moment to fetch data from DB and update UI
+        setTimeout(() => window.location.reload(), 1500);
       } else {
         setMessages(p => [...p, { role: 'system', text: "لم أتمكن من استخراج إجراء محدد من طلبك. هل يمكنك التوضيح أكثر؟" }]);
       }
     } catch (error) {
       console.warn('AI Backend failed or missing API Key.');
-      setMessages(p => [...p, { role: 'system', text: "⚠️ عذراً، لا يمكنني الاتصال بمحرك الذكاء الاصطناعي الآن تأكد من توفر OPENAI_API_KEY." }]);
+      setMessages(p => [...p, { role: 'system', text: "⚠️ عذراً، لا يمكنني الاتصال بمحرك الذكاء الاصطناعي الآن (تأكد من إعدادات الشبكة و Railway)." }]);
     }
     setIsLoading(false);
   };

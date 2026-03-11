@@ -79,6 +79,99 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
   }
 });
 
+// --- DATA ROUTES (HABITS & SETTINGS) ---
+app.get('/api/data/habits', authMiddleware, async (req, res) => {
+  try {
+    const habits = await prisma.habitLog.findMany({ where: { userId: req.userId } });
+    const formatted = habits.reduce((acc, h) => ({ ...acc, [h.key]: h.completed }), {});
+    res.json(formatted);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/data/habits', authMiddleware, async (req, res) => {
+  try {
+    const { key, completed } = req.body;
+    await prisma.habitLog.upsert({
+      where: { userId_key: { userId: req.userId, key } },
+      update: { completed },
+      create: { userId: req.userId, key, completed }
+    });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/data/settings', authMiddleware, async (req, res) => {
+  try {
+    const settings = await prisma.setting.findMany({ where: { userId: req.userId } });
+    const formatted = settings.reduce((acc, s) => ({ ...acc, [s.key]: s.value }), {});
+    res.json(formatted);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/data/settings', authMiddleware, async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    await prisma.setting.upsert({
+      where: { userId_key: { userId: req.userId, key } },
+      update: { value: String(value) },
+      create: { userId: req.userId, key, value: String(value) }
+    });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/data/health', authMiddleware, async (req, res) => {
+  try {
+    const { date } = req.query; // YYYY-MM-DD
+    const isoDate = date || new Date().toISOString().split('T')[0];
+    
+    let health = await prisma.healthLog.findUnique({
+      where: { userId_date: { userId: req.userId, date: isoDate } }
+    });
+
+    if (!health) {
+      health = { calories: 0, weight: null, date: isoDate };
+    }
+    
+    res.json(health);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/data/health', authMiddleware, async (req, res) => {
+  try {
+    const { date, calories, weight } = req.body;
+    const isoDate = date || new Date().toISOString().split('T')[0];
+    
+    await prisma.healthLog.upsert({
+      where: { userId_date: { userId: req.userId, date: isoDate } },
+      update: { 
+        calories: calories !== undefined ? calories : undefined,
+        weight: weight !== undefined ? weight : undefined
+      },
+      create: { 
+        userId: req.userId, 
+        date: isoDate, 
+        calories: calories || 0,
+        weight: weight || null
+      }
+    });
+    
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET = process.env.PLAID_SECRET;
 const PLAID_ENV = process.env.PLAID_ENV || 'sandbox';
@@ -156,8 +249,8 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
-// AI Agent Endpoint (Gemini 2.5 Flash)
-app.post('/api/agent', async (req, res, next) => {
+// AI Omni-Agent Endpoint (Gemini 2.5 Flash)
+app.post('/api/agent', authMiddleware, async (req, res, next) => {
   try {
     const { prompt, context } = req.body;
     const apiKey = process.env.GEMINI_API_KEY;
@@ -174,6 +267,7 @@ Allowed Action Types:
 1. { "type": "update_calories", "value": 500 } // Adds 500 to current
 2. { "type": "check_habit", "habit": "Gym", "day": "Wed" } // Checks off a habit for a short day name (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
 3. { "type": "update_weight", "value": 78.5 } // Sets current weight
+4. { "type": "chat", "message": "تم التنفيذ يا بطل" } // A friendly arabic text message to show the user
 
 Current Context:
 ${JSON.stringify(context)}`;
@@ -205,6 +299,38 @@ ${JSON.stringify(context)}`;
     } catch(e) {
       const match = messageContent.match(/\[\s*\{.*\}\s*\]/s);
       if (match) actions = JSON.parse(match[0]);
+    }
+
+    // Phase 4: Server-Side Execution
+    // Go through actions and execute them in the DB directly
+    const today = new Date().toISOString().split('T')[0];
+    
+    for (const action of actions) {
+      if (action.type === 'update_calories') {
+        let health = await prisma.healthLog.findUnique({ where: { userId_date: { userId: req.userId, date: today } } });
+        const currentCal = health ? health.calories : 0;
+        await prisma.healthLog.upsert({
+          where: { userId_date: { userId: req.userId, date: today } },
+          update: { calories: currentCal + action.value },
+          create: { userId: req.userId, date: today, calories: action.value }
+        });
+      }
+      else if (action.type === 'update_weight') {
+        await prisma.healthLog.upsert({
+          where: { userId_date: { userId: req.userId, date: today } },
+          update: { weight: action.value },
+          create: { userId: req.userId, date: today, weight: action.value }
+        });
+      }
+      else if (action.type === 'check_habit') {
+        // Assume key format: "mon-gym" based on action.day and action.habit
+        const key = `${action.day.toLowerCase()}-${action.habit.toLowerCase()}`;
+        await prisma.habitLog.upsert({
+           where: { userId_key: { userId: req.userId, key } },
+           update: { completed: true },
+           create: { userId: req.userId, key, completed: true }
+        });
+      }
     }
 
     res.json({ actions });

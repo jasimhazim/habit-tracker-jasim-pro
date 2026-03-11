@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  email               String   @unique
+  passwordHash        String
+  displayName         String
+  profilePictureUrl   String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  habits              HabitLog[]
+  settings            Setting[]
+  healthLogs          HealthLog[]
+}
+
+model HabitLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String   // e.g. "mon-gym", "tue-diet"
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, key])
+}
+
+model Setting {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key       String   // e.g. "budget", "study_hours", "weight_start"
+  value     String
+
+  @@unique([userId, key])
+}
+
+model HealthLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String   // "YYYY-MM-DD"
+  calories  Int      @default(0)
+  weight    Float?
+
+  @@unique([userId, date])
+}

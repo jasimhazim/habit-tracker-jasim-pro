@@ -9,7 +9,7 @@ import SettingsModal from './SettingsModal';
 import AIAgent from './AIAgent';
 import { Activity, Wallet, Target, Settings as SettingsIcon, MessageSquare } from 'lucide-react';
 
-export default function DesktopApp() {
+export default function DesktopApp({ user }) {
   const [streak, setStreak] = useState(0);
   const [greeting, setGreeting] = useState('');
   const [showSettings, setShowSettings] = useState(false);
@@ -21,6 +21,12 @@ export default function DesktopApp() {
     else setGreeting('ليلة سعيدة');
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('pro_token');
+    localStorage.removeItem('pro_user');
+    window.location.reload();
+  };
+
   return (
     <div className="desktop-root ar-text">
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
@@ -28,11 +34,11 @@ export default function DesktopApp() {
         <div className="desktop-header-area" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h1 style={{ fontSize: 40, fontWeight: 900, margin: 0, color: '#fff' }}>
-              {greeting}، <span className="glow-text">أيها البطل</span>
+              {greeting}، <span className="glow-text">{user?.displayName?.split(' ')[0] || 'أيها البطل'}</span>
             </h1>
             <p style={{ color: '#a1a1aa', fontSize: 16, marginTop: 8 }}>مركز القيادة الشامل، حيث تلتقي الأهداف الاستراتيجية مع الذكاء الاصطناعي.</p>
           </div>
-          <TopHeader streak={streak} onLogout={() => window.location.reload()} onSettingsClick={() => setShowSettings(true)} />
+          <TopHeader streak={streak} user={user} onLogout={handleLogout} onSettingsClick={() => setShowSettings(true)} />
         </div>
 
         <div className="desktop-dashboard-grid">
