@@ -91,6 +91,65 @@ app.get('/api/transactions', async (req, res) => {
   }
 });
 
+// AI Agent Endpoint (Gemini 2.5 Flash)
+app.post('/api/agent', async (req, res, next) => {
+  try {
+    const { prompt, context } = req.body;
+    // User provided the Gemini key directly, so we'll use it as fallback if not in ENV
+    const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyDCMq8GZnnUDy9ZLiLWYduQlLpoecTNiZQ';
+
+    if (!apiKey) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY is missing.' });
+    }
+
+    const systemPrompt = `You are a high-end personal assistant AI integrated into a premium Habit and Goals tracker dashboard.
+Your job is to read the user's message, understand their intent based on the app's current context, and return a strict JSON array of ACTION objects to execute.
+Do not return conversational text outside the JSON.
+
+Allowed Action Types:
+1. { "type": "update_calories", "value": 500 } // Adds 500 to current
+2. { "type": "check_habit", "habit": "Gym", "day": "Wed" } // Checks off a habit for a short day name (Mon, Tue, Wed, Thu, Fri, Sat, Sun)
+3. { "type": "update_weight", "value": 78.5 } // Sets current weight
+
+Current Context:
+${JSON.stringify(context)}`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          { parts: [{ text: `${systemPrompt}\n\nUser Request: ${prompt}` }] }
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          responseMimeType: "application/json",
+        }
+      })
+    });
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const messageContent = data.candidates[0].content.parts[0].text;
+    let actions = [];
+    try {
+      const parsed = JSON.parse(messageContent);
+      actions = Array.isArray(parsed) ? parsed : (parsed.actions || []);
+    } catch(e) {
+      const match = messageContent.match(/\[\s*\{.*\}\s*\]/s);
+      if (match) actions = JSON.parse(match[0]);
+    }
+
+    res.json({ actions });
+  } catch (error) {
+    console.error("AI Error:", error);
+    next(error);
+  }
+});
+
 // Serve static frontend files in production
 app.use(express.static(path.join(__dirname, '../dist')));
 

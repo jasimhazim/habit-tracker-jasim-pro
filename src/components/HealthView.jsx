@@ -66,33 +66,16 @@ export default function HealthView() {
         </div>
       </div>
 
-      {/* Weight Inputs */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
-        {[
-          { id: 'start', label: 'Start (kg)', color: '#71717a' },
-          { id: 'current', label: 'Current (kg)', color: '#3b82f6' },
-          { id: 'goal', label: 'Goal (kg)', color: '#10b981' }
-        ].map(f => (
-          <div key={f.id} style={{
-            background: "rgba(255,255,255,0.04)", border: `1px solid rgba(255,255,255,0.08)`,
-            borderRadius: 14, padding: "12px 10px", textAlign: "center",
-          }}>
-            <div style={{
-              fontFamily: "'JetBrains Mono'", fontSize: 10, color: f.color,
-              textTransform: "uppercase", letterSpacing: 1, marginBottom: 8, fontWeight: 700
-            }}>{f.label}</div>
-            <input 
-              style={{
-                background: "transparent", border: "none", borderBottom: `1.5px dashed ${f.color}`,
-                color: "#fff", fontFamily: "'JetBrains Mono', monospace", fontSize: 18,
-                fontWeight: 800, width: "100%", textAlign: "center", outline: "none",
-                padding: "2px 0", borderRadius: 0,
-              }}
-              type="number" step="0.1" placeholder="—"
-              value={weights[f.id]} onChange={(e) => updateWeight(f.id, e.target.value)} 
-            />
-          </div>
-        ))}
+      {/* Weight Summary (Read-Only) */}
+      <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.05)", padding: 16, marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: 11, color: '#71717a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Current Weight</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#3b82f6', fontFamily: "'JetBrains Mono'" }}>{weights.current} kg</div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 11, color: '#71717a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Target</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: '#10b981', fontFamily: "'JetBrains Mono'" }}>{weights.goal} kg</div>
+        </div>
       </div>
 
       {/* Weight Chart */}

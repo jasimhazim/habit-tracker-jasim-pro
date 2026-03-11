@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Target } from 'lucide-react';
 
 export default function DesktopSidebar() {
   const [goals, setGoals] = useState({});
@@ -25,108 +27,128 @@ export default function DesktopSidebar() {
   }, []);
 
   // Calculate Progress Percentages
-  // 1. Weight Progress
   const startWeight = parseFloat(weights.start) || 85;
   const currentWeight = parseFloat(weights.current) || 79.8;
   const goalWeight = parseFloat(weights.goal) || 75;
   const totalWeightToLose = startWeight - goalWeight;
   const weightLost = startWeight - currentWeight;
-  let weightPct = 0;
-  if (totalWeightToLose > 0) {
-    weightPct = Math.min(Math.max((weightLost / totalWeightToLose) * 100, 0), 100);
-  }
+  const weightPct = totalWeightToLose > 0 ? Math.min(Math.max((weightLost / totalWeightToLose) * 100, 0), 100) : 0;
 
-  // 2. Expenses Progress (Reverse progress, closer to 100% is bad, we want remaining)
   const budgetUsedPct = Math.min((currentSpend / monthlyBudget) * 100, 100);
-
-  // 3. Education / Study (Mocking progress from habits)
   const studyPct = 85; 
 
-  const GoalCard = ({ title, icon, value, target, pct, color, desc }) => (
-    <div style={{
-      background: "rgba(255,255,255,0.03)", borderRadius: 20,
-      border: "1px solid rgba(255,255,255,0.08)", padding: 20,
-      display: "flex", flexDirection: "column", gap: 12
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 12, background: `rgba(${color},0.15)`,
-            color: `rgb(${color})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20
-          }}>{icon}</div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, fontFamily: "'Tajawal', sans-serif" }}>{title}</div>
-            <div style={{ fontSize: 12, color: "#a1a1aa", fontFamily: "'Tajawal', sans-serif" }}>{desc}</div>
+  const PremiumRingCard = ({ title, icon, value, target, pct, colorHex, desc }) => {
+    const data = [
+      { name: 'Achieved', value: pct },
+      { name: 'Remaining', value: 100 - pct }
+    ];
+    
+    return (
+      <div className="premium-list-item" style={{ flexDirection: "column", alignItems: "flex-start", gap: 16, padding: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 16, background: `${colorHex}22`,
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24,
+              boxShadow: `0 0 20px ${colorHex}11`
+            }}>{icon}</div>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, fontFamily: "'Tajawal', sans-serif", color: "#fff" }}>{title}</div>
+              <div style={{ fontSize: 13, color: "#a1a1aa", fontFamily: "'Tajawal', sans-serif" }}>{desc}</div>
+            </div>
+          </div>
+          
+          <div style={{ width: 64, height: 64, position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  innerRadius={22}
+                  outerRadius={30}
+                  startAngle={90}
+                  endAngle={-270}
+                  dataKey="value"
+                  stroke="none"
+                  cornerRadius={10}
+                >
+                  <Cell fill={colorHex} />
+                  <Cell fill="rgba(255,255,255,0.05)" />
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, 
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 800, fontFamily: "'JetBrains Mono'", color: colorHex
+            }}>
+              {Math.round(pct)}<span style={{fontSize: 10}}>%</span>
+            </div>
           </div>
         </div>
-        <div style={{ fontSize: 28, fontWeight: 800, fontFamily: "'JetBrains Mono'", color: `rgb(${color})` }}>
-          {Math.round(pct)}<span style={{ fontSize: 14 }}>%</span>
+
+        <div style={{ display: "flex", justifyContent: "space-between", width: "100%", fontSize: 13, fontFamily: "'JetBrains Mono'" }}>
+          <div style={{ color: "#e4e4e7" }}><span style={{color: "#71717a", fontSize: 11, marginRight: 6}}>CURRENT</span>{value}</div>
+          <div style={{ color: colorHex }}><span style={{color: "#71717a", fontSize: 11, marginRight: 6}}>TARGET</span>{target}</div>
         </div>
       </div>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#a1a1aa", marginTop: 4 }}>
-        <span style={{ fontFamily: "'JetBrains Mono'" }}>{value}</span>
-        <span style={{ fontFamily: "'JetBrains Mono'" }}>{target}</span>
-      </div>
-      <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden" }}>
-        <div style={{
-          height: "100%", borderRadius: 10, width: `${pct}%`,
-          background: `rgb(${color})`, transition: "width 0.5s ease",
-        }} />
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="desktop-sidebar fade-up ar-text">
-      <div style={{ marginBottom: 12 }}>
-        <h2 style={{ fontSize: 28, fontWeight: 900, margin: "0 0 8px", color: "#fff" }}>لوحة القيادة والمؤشرات</h2>
-        <p style={{ margin: 0, fontSize: 15, color: "#a1a1aa", lineHeight: 1.6 }}>متابعة فورية لأهم 3 أهداف استراتيجية. الأرقام لا تكذب.</p>
+    <div className="desktop-card fade-up ar-text" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <h2 className="desktop-card-title"><Target color="#f4f4f5" size={24} /> الأهداف الاستراتيجية</h2>
+      
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1 }}>
+        <PremiumRingCard 
+          title="الوزن والصحة" 
+          desc="الوصول للوزن المثالي"
+          icon="⚖️" 
+          value={`${currentWeight} kg`} 
+          target={`${goalWeight} kg`} 
+          pct={weightPct} 
+          colorHex="#10b981" // Emerald
+        />
+
+        <PremiumRingCard 
+          title="النفقات والميزانية" 
+          desc="الاستهلاك من الميزانية"
+          icon="💳" 
+          value={`$${currentSpend}`} 
+          target={`$${monthlyBudget}`} 
+          pct={budgetUsedPct} 
+          colorHex="#f59e0b" // Amber
+        />
+
+        <PremiumRingCard 
+          title="التعليم والتطور" 
+          desc="إنجاز ساعات الدراسة"
+          icon="🧠" 
+          value={`${Math.round((studyPct / 100) * 40)} hrs`} 
+          target={`40 hrs`} 
+          pct={studyPct} 
+          colorHex="#6366f1" // Indigo
+        />
       </div>
 
-      <GoalCard 
-        title="الوزن والصحة" 
-        desc="الهدف الشهري للوصول للوزن المثالي"
-        icon="⚖️" 
-        value={`${currentWeight} kg`} 
-        target={`${goalWeight} kg`} 
-        pct={weightPct} 
-        color="16, 185, 129" // Emerald
-      />
-
-      <GoalCard 
-        title="النفقات والميزانية" 
-        desc="الاستهلاك الشهري من الميزانية المحددة"
-        icon="💳" 
-        value={`$${currentSpend}`} 
-        target={`$${monthlyBudget}`} 
-        pct={budgetUsedPct} 
-        color="245, 158, 11" // Amber
-      />
-
-      <GoalCard 
-        title="التعليم والتطور" 
-        desc="نسبة إنجاز ساعات الدراسة المخططة"
-        icon="🧠" 
-        value={`${Math.round((studyPct / 100) * 40)} hrs`} 
-        target={`40 hrs`} 
-        pct={studyPct} 
-        color="99, 102, 241" // Indigo
-      />
-
-      {/* Monthly Goals Text Summaries */}
       <div style={{
-        marginTop: 16, background: "rgba(255,255,255,0.02)", borderRadius: 20,
-        border: "1px dashed rgba(255,255,255,0.1)", padding: 20
+        marginTop: 24, background: "linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))", 
+        borderRadius: 24, border: "1px solid rgba(255,255,255,0.08)", padding: 24,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)"
       }}>
-        <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 16px", color: "#e4e4e7" }}>الأهداف الشهرية المكتوبة</h3>
-        {["health", "fin", "edu"].map(catId => {
+        <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 20px", color: "#e4e4e7" }}>نوايا الشهر الحالي</h3>
+        {["health", "fin", "edu"].map((catId, idx) => {
           const text = goals[`${catId}-monthly`];
-          const titles = { health: "الصحة", fin: "المال", edu: "التعليم" };
+          const titles = { health: "الصحة البدنية", fin: "الثروة والاستثمار", edu: "التطور العقلي" };
+          const colors = { health: "#10b981", fin: "#f59e0b", edu: "#6366f1" };
           return (
-            <div key={catId} style={{ marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ fontSize: 12, color: "#a1a1aa", fontWeight: 700, marginBottom: 4 }}>{titles[catId]}</div>
-              <div style={{ fontSize: 14, color: text ? "#fff" : "#52525b" }}>{text || "لم يتم تحديد هدف شهري بعد."}</div>
+            <div key={catId} style={{ marginBottom: idx === 2 ? 0 : 16, paddingBottom: idx === 2 ? 0 : 16, borderBottom: idx === 2 ? 'none' : "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: colors[catId], boxShadow: `0 0 8px ${colors[catId]}` }} />
+                <div style={{ fontSize: 13, color: "#a1a1aa", fontWeight: 700 }}>{titles[catId]}</div>
+              </div>
+              <div style={{ fontSize: 15, color: text ? "#fff" : "#52525b", lineHeight: 1.5, paddingRight: 16 }}>
+                {text || "لم يتم تحديد رؤية لهذا المسار بعد."}
+              </div>
             </div>
           );
         })}
