@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Mail, Lock, User, UploadCloud, ChevronRight, Loader2 } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function AuthView({ onLogin }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -11,6 +12,12 @@ export default function AuthView({ onLogin }) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [profilePic, setProfilePic] = useState('');
+
+  const handleAuthSuccess = (data) => {
+    localStorage.setItem('pro_token', data.token);
+    localStorage.setItem('pro_user', JSON.stringify(data.user));
+    onLogin(data.user);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,10 +39,28 @@ export default function AuthView({ onLogin }) {
       
       if (!res.ok) throw new Error(data.error || 'Authentication failed');
 
-      // Save token and user data securely
-      localStorage.setItem('pro_token', data.token);
-      localStorage.setItem('pro_user', JSON.stringify(data.user));
-      onLogin(data.user);
+      handleAuthSuccess(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: credentialResponse.credential })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Google Authentication failed');
+      
+      handleAuthSuccess(data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -127,6 +152,23 @@ export default function AuthView({ onLogin }) {
             {!loading && <ChevronRight size={20} />}
           </button>
         </form>
+
+        <div style={{ display: 'flex', alignItems: 'center', margin: '24px 0', position: 'relative', zIndex: 1 }}>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+          <span style={{ padding: '0 16px', color: '#71717a', fontSize: 14, fontFamily: "'Tajawal', sans-serif" }}>أو</span>
+          <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+          <GoogleLogin 
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('فشل تسجيل الدخول باستخدام Google')}
+            theme="filled_black"
+            shape="circle"
+            text={isLogin ? "signin_with" : "signup_with"}
+            locale="ar"
+          />
+        </div>
 
         <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', marginTop: 32 }}>
           <p style={{ color: '#71717a', fontSize: 14 }}>

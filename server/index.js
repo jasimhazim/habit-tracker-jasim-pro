@@ -7,8 +7,12 @@ import { fileURLToPath } from 'url';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 
 dotenv.config();
+
+const GOOGLE_CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID;
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,6 +80,41 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
     res.json({ user: { id: user.id, email: user.email, displayName: user.displayName, profilePictureUrl: user.profilePictureUrl } });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ error: 'No token provided' });
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    if (!payload) throw new Error('Invalid Google payload');
+
+    const { email, name, picture } = payload;
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      // Create new user using Google info
+      user = await prisma.user.create({
+        data: { 
+          email, 
+          passwordHash: await bcrypt.hash(Math.random().toString(36), 10), // Random placeholder password
+          displayName: name, 
+          profilePictureUrl: picture || null 
+        }
+      });
+    }
+
+    const jwtToken = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token: jwtToken, user: { id: user.id, email: user.email, displayName: user.displayName, profilePictureUrl: user.profilePictureUrl } });
+  } catch (e) {
+    console.error('Google Auth Error:', e);
+    res.status(500).json({ error: 'Google authentication failed' });
   }
 });
 
