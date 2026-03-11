@@ -42,10 +42,14 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const { email, password, displayName, profilePictureUrl } = req.body;
     
+    if (!email || !password || !displayName) {
+      return res.status(400).json({ error: 'Email, password, and name are required' });
+    }
+    
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) return res.status(400).json({ error: 'Email already exists' });
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = bcrypt.hashSync(password.toString(), 10);
     const user = await prisma.user.create({
       data: { email, passwordHash, displayName, profilePictureUrl: profilePictureUrl || null }
     });
@@ -53,6 +57,7 @@ app.post('/api/auth/register', async (req, res) => {
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, email: user.email, displayName: user.displayName, profilePictureUrl: user.profilePictureUrl } });
   } catch (e) {
+    console.error('Register Error:', e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -60,15 +65,19 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = bcrypt.compareSync(password.toString(), user.passwordHash);
     if (!valid) return res.status(400).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user.id, email: user.email, displayName: user.displayName, profilePictureUrl: user.profilePictureUrl } });
   } catch (e) {
+    console.error('Login Error:', e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -103,8 +112,8 @@ app.post('/api/auth/google', async (req, res) => {
       user = await prisma.user.create({
         data: { 
           email, 
-          passwordHash: await bcrypt.hash(Math.random().toString(36), 10), // Random placeholder password
-          displayName: name, 
+          passwordHash: bcrypt.hashSync(Math.random().toString(36), 10),
+          displayName: name || email, 
           profilePictureUrl: picture || null 
         }
       });
@@ -312,7 +321,7 @@ Allowed Action Types:
 Current Context:
 ${JSON.stringify(context)}`;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

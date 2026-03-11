@@ -1,64 +1,90 @@
-import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, X, Save, ShieldCheck, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect } from "react";
+import {
+  Settings as SettingsIcon,
+  X,
+  Save,
+  ShieldCheck,
+  Image as ImageIcon,
+} from "lucide-react";
 
 export default function SettingsModal({ onClose }) {
-  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "80" });
-  const [goals, setGoals] = useState({ 
-    "health-yearly": "", "health-monthly": "",
-    "fin-yearly": "", "fin-monthly": "",
-    "edu-yearly": "", "edu-monthly": ""
+  const [weights, setWeights] = useState({
+    start: "85",
+    current: "79.8",
+    goal: "80",
+  });
+  const [goals, setGoals] = useState({
+    "health-yearly": "",
+    "health-monthly": "",
+    "fin-yearly": "",
+    "fin-monthly": "",
+    "edu-yearly": "",
+    "edu-monthly": "",
   });
   const [budget, setBudget] = useState(2000);
   const [studyHours, setStudyHours] = useState(40);
-  const [profilePic, setProfilePic] = useState('');
+  const [profilePic, setProfilePic] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
-        const token = localStorage.getItem('pro_token');
-        const headers = { 'Authorization': `Bearer ${token}` };
-        
+        const token = localStorage.getItem("pro_token");
+        const headers = { Authorization: `Bearer ${token}` };
+
         // Load Settings
-        const res = await fetch('/api/data/settings', { headers });
+        const res = await fetch("/api/data/settings", { headers });
         if (res.ok) {
           const data = await res.json();
-          if (data['health:weights']) setWeights(JSON.parse(data['health:weights']));
-          if (data['goals:data']) setGoals(JSON.parse(data['goals:data']));
-          if (data['settings:budget']) setBudget(Number(data['settings:budget']));
-          if (data['settings:study']) setStudyHours(Number(data['settings:study']));
+          if (data["health:weights"])
+            setWeights(JSON.parse(data["health:weights"]));
+          if (data["goals:data"]) setGoals(JSON.parse(data["goals:data"]));
+          if (data["settings:budget"])
+            setBudget(Number(data["settings:budget"]));
+          if (data["settings:study"])
+            setStudyHours(Number(data["settings:study"]));
         }
 
         // Load Profile
-        const meRes = await fetch('/api/auth/me', { headers });
+        const meRes = await fetch("/api/auth/me", { headers });
         if (meRes.ok) {
           const meData = await meRes.json();
-          if (meData.user?.profilePictureUrl) setProfilePic(meData.user.profilePictureUrl);
+          if (meData.user?.profilePictureUrl)
+            setProfilePic(meData.user.profilePictureUrl);
         }
-      } catch (e) { console.error('Failed to load settings', e); }
+      } catch (e) {
+        console.error("Failed to load settings", e);
+      }
     };
     load();
   }, []);
 
   const handleSave = async () => {
     try {
-      const token = localStorage.getItem('pro_token');
-      const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-      
-      const saveKey = async (key, value) => {
-        await fetch('/api/data/settings', { method: 'POST', headers, body: JSON.stringify({ key, value }) });
+      const token = localStorage.getItem("pro_token");
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
       };
 
-      await saveKey('health:weights', JSON.stringify(weights));
-      await saveKey('goals:data', JSON.stringify(goals));
-      await saveKey('settings:budget', budget.toString());
-      await saveKey('settings:study', studyHours.toString());
-      
+      const saveKey = async (key, value) => {
+        await fetch("/api/data/settings", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ key, value }),
+        });
+      };
+
+      await saveKey("health:weights", JSON.stringify(weights));
+      await saveKey("goals:data", JSON.stringify(goals));
+      await saveKey("settings:budget", budget.toString());
+      await saveKey("settings:study", studyHours.toString());
+
       // Save Profile Picture to backend database natively
       if (profilePic) {
-        await fetch('/api/auth/update', {
-           method: 'POST',
-           headers,
-           body: JSON.stringify({ profilePictureUrl: profilePic })
+        await fetch("/api/auth/update", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ profilePictureUrl: profilePic }),
         });
       }
 
@@ -68,90 +94,345 @@ export default function SettingsModal({ onClose }) {
     }
   };
 
-  const InputRow = ({ label, type = "text", value, onChange, unit, placeholder }) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-      <label style={{ color: '#e4e4e7', fontSize: 14, fontWeight: 700, fontFamily: "'Tajawal', sans-serif" }}>{label}</label>
-      <div style={{ position: 'relative', width: '50%' }}>
-        <input 
-          type={type} 
-          value={value || ''} 
+  const InputRow = ({
+    label,
+    type = "text",
+    value,
+    onChange,
+    unit,
+    placeholder,
+  }) => (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 16,
+      }}
+    >
+      <label
+        style={{
+          color: "#e4e4e7",
+          fontSize: 14,
+          fontWeight: 700,
+          fontFamily: "'Tajawal', sans-serif",
+        }}
+      >
+        {label}
+      </label>
+      <div style={{ position: "relative", width: "50%" }}>
+        <input
+          type={type}
+          value={value || ""}
           onChange={onChange}
           placeholder={placeholder}
-          style={{ 
-            width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', 
-            borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, fontFamily: "'JetBrains Mono'", outline: 'none'
+          style={{
+            width: "100%",
+            background: "rgba(0,0,0,0.3)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 8,
+            padding: "10px 14px",
+            color: "#fff",
+            fontSize: 14,
+            fontFamily: "'JetBrains Mono'",
+            outline: "none",
           }}
         />
-        {unit && <span style={{ position: 'absolute', right: 12, top: 10, color: '#71717a', fontSize: 12, fontFamily: "'JetBrains Mono'" }}>{unit}</span>}
+        {unit && (
+          <span
+            style={{
+              position: "absolute",
+              right: 12,
+              top: 10,
+              color: "#71717a",
+              fontSize: 12,
+              fontFamily: "'JetBrains Mono'",
+            }}
+          >
+            {unit}
+          </span>
+        )}
       </div>
     </div>
   );
 
   const GoalTextArea = ({ label, value, onChange }) => (
     <div style={{ marginBottom: 16 }}>
-      <label style={{ color: '#e4e4e7', fontSize: 14, fontWeight: 700, fontFamily: "'Tajawal', sans-serif', display: 'block", marginBottom: 8 }}>{label}</label>
-      <textarea 
-        value={value || ''} 
+      <label
+        style={{
+          color: "#e4e4e7",
+          fontSize: 14,
+          fontWeight: 700,
+          fontFamily: "'Tajawal', sans-serif', display: 'block",
+          marginBottom: 8,
+        }}
+      >
+        {label}
+      </label>
+      <textarea
+        value={value || ""}
         onChange={onChange}
-        style={{ 
-          width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', 
-          borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 14, fontFamily: "'Tajawal', sans-serif", outline: 'none', resize: 'vertical', minHeight: 80
+        style={{
+          width: "100%",
+          background: "rgba(0,0,0,0.3)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 8,
+          padding: "10px 14px",
+          color: "#fff",
+          fontSize: 14,
+          fontFamily: "'Tajawal', sans-serif",
+          outline: "none",
+          resize: "vertical",
+          minHeight: 80,
         }}
       />
     </div>
   );
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
-      background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(10px)', zIndex: 9999,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-    }}>
-      <div className="fade-up ar-text" style={{
-        background: '#18181b', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)',
-        width: '100%', maxWidth: 600, maxHeight: '90vh', overflowY: 'auto',
-        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column'
-      }}>
-        <div style={{ padding: '24px 32px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: '#18181b', zIndex: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: "rgba(0,0,0,0.8)",
+        backdropFilter: "blur(10px)",
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+      }}
+    >
+      <div
+        className="fade-up ar-text"
+        style={{
+          background: "#18181b",
+          borderRadius: 24,
+          border: "1px solid rgba(255,255,255,0.1)",
+          width: "100%",
+          maxWidth: 600,
+          maxHeight: "90vh",
+          overflowY: "auto",
+          boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            padding: "24px 32px",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "sticky",
+            top: 0,
+            background: "#18181b",
+            zIndex: 10,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <SettingsIcon color="#f59e0b" size={24} />
-            <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0, color: '#fff', fontFamily: "'Tajawal', sans-serif" }}>الإعدادات المركزية</h2>
+            <h2
+              style={{
+                fontSize: 20,
+                fontWeight: 800,
+                margin: 0,
+                color: "#fff",
+                fontFamily: "'Tajawal', sans-serif",
+              }}
+            >
+              الإعدادات المركزية
+            </h2>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer' }}><X size={24} /></button>
+          <button
+            onClick={onClose}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#a1a1aa",
+              cursor: "pointer",
+            }}
+          >
+            <X size={24} />
+          </button>
         </div>
 
         <div style={{ padding: 32, flex: 1 }}>
           <div style={{ marginBottom: 32 }}>
-            <h3 style={{ fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, color: '#a855f7', margin: '0 0 16px', borderBottom: '1px solid rgba(168,85,247,0.2)', paddingBottom: 8 }}>
+            <h3
+              style={{
+                fontSize: 16,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                color: "#a855f7",
+                margin: "0 0 16px",
+                borderBottom: "1px solid rgba(168,85,247,0.2)",
+                paddingBottom: 8,
+              }}
+            >
               <ImageIcon size={18} /> تخصيص الحساب
             </h3>
-            <InputRow label="رابط الصورة الشخصية (Avatar URL)" type="text" value={profilePic} onChange={e => setProfilePic(e.target.value)} placeholder="https://example.com/avatar.jpg" />
+            <InputRow
+              label="رابط الصورة الشخصية (Avatar URL)"
+              type="text"
+              value={profilePic}
+              onChange={(e) => setProfilePic(e.target.value)}
+              placeholder="https://example.com/avatar.jpg"
+            />
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <h3 style={{ fontSize: 16, color: '#f59e0b', margin: '0 0 16px', borderBottom: '1px solid rgba(245,158,11,0.2)', paddingBottom: 8 }}>المقاييس الصحية (Weight)</h3>
-            <InputRow label="وزن البداية" type="number" value={weights.start} onChange={e => setWeights({...weights, start: e.target.value})} unit="kg" />
-            <InputRow label="الوزن الحالي" type="number" value={weights.current} onChange={e => setWeights({...weights, current: e.target.value})} unit="kg" />
-            <InputRow label="الوزن المستهدف" type="number" value={weights.goal} onChange={e => setWeights({...weights, goal: e.target.value})} unit="kg" />
+            <h3
+              style={{
+                fontSize: 16,
+                color: "#f59e0b",
+                margin: "0 0 16px",
+                borderBottom: "1px solid rgba(245,158,11,0.2)",
+                paddingBottom: 8,
+              }}
+            >
+              المقاييس الصحية (Weight)
+            </h3>
+            <InputRow
+              label="وزن البداية"
+              type="number"
+              value={weights.start}
+              onChange={(e) =>
+                setWeights({ ...weights, start: e.target.value })
+              }
+              unit="kg"
+            />
+            <InputRow
+              label="الوزن الحالي"
+              type="number"
+              value={weights.current}
+              onChange={(e) =>
+                setWeights({ ...weights, current: e.target.value })
+              }
+              unit="kg"
+            />
+            <InputRow
+              label="الوزن المستهدف"
+              type="number"
+              value={weights.goal}
+              onChange={(e) => setWeights({ ...weights, goal: e.target.value })}
+              unit="kg"
+            />
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <h3 style={{ fontSize: 16, color: '#10b981', margin: '0 0 16px', borderBottom: '1px solid rgba(16,185,129,0.2)', paddingBottom: 8 }}>المقاييس المالية والتعليمية</h3>
-            <InputRow label="الميزانية الشهرية" type="number" value={budget} onChange={e => setBudget(e.target.value)} unit="CAD" />
-            <InputRow label="هدف ساعات الدراسة" type="number" value={studyHours} onChange={e => setStudyHours(e.target.value)} unit="hrs" />
+            <h3
+              style={{
+                fontSize: 16,
+                color: "#10b981",
+                margin: "0 0 16px",
+                borderBottom: "1px solid rgba(16,185,129,0.2)",
+                paddingBottom: 8,
+              }}
+            >
+              المقاييس المالية والتعليمية
+            </h3>
+            <InputRow
+              label="الميزانية الشهرية"
+              type="number"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              unit="CAD"
+            />
+            <InputRow
+              label="هدف ساعات الدراسة"
+              type="number"
+              value={studyHours}
+              onChange={(e) => setStudyHours(e.target.value)}
+              unit="hrs"
+            />
           </div>
 
           <div style={{ marginBottom: 32 }}>
-            <h3 style={{ fontSize: 16, color: '#3b82f6', margin: '0 0 16px', borderBottom: '1px solid rgba(59,130,246,0.2)', paddingBottom: 8 }}>النوايا الشهرية</h3>
-            <GoalTextArea label="هدف الصحة الشهري" value={goals["health-monthly"]} onChange={e => setGoals({...goals, "health-monthly": e.target.value})} />
-            <GoalTextArea label="هدف الثروة الشهري" value={goals["fin-monthly"]} onChange={e => setGoals({...goals, "fin-monthly": e.target.value})} />
-            <GoalTextArea label="هدف التعليم الشهري" value={goals["edu-monthly"]} onChange={e => setGoals({...goals, "edu-monthly": e.target.value})} />
+            <h3
+              style={{
+                fontSize: 16,
+                color: "#3b82f6",
+                margin: "0 0 16px",
+                borderBottom: "1px solid rgba(59,130,246,0.2)",
+                paddingBottom: 8,
+              }}
+            >
+              النوايا الشهرية
+            </h3>
+            <GoalTextArea
+              label="هدف الصحة الشهري"
+              value={goals["health-monthly"]}
+              onChange={(e) =>
+                setGoals({ ...goals, "health-monthly": e.target.value })
+              }
+            />
+            <GoalTextArea
+              label="هدف الثروة الشهري"
+              value={goals["fin-monthly"]}
+              onChange={(e) =>
+                setGoals({ ...goals, "fin-monthly": e.target.value })
+              }
+            />
+            <GoalTextArea
+              label="هدف التعليم الشهري"
+              value={goals["edu-monthly"]}
+              onChange={(e) =>
+                setGoals({ ...goals, "edu-monthly": e.target.value })
+              }
+            />
           </div>
         </div>
 
-        <div style={{ padding: '24px 32px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end', gap: 12, position: 'sticky', bottom: 0, background: '#18181b', zIndex: 10 }}>
-          <button onClick={onClose} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid #3f3f46', color: '#e4e4e7', borderRadius: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Tajawal', sans-serif" }}>إلغاء</button>
-          <button onClick={handleSave} style={{ padding: '12px 24px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontFamily: "'Tajawal', sans-serif" }}>
+        <div
+          style={{
+            padding: "24px 32px",
+            borderTop: "1px solid rgba(255,255,255,0.05)",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 12,
+            position: "sticky",
+            bottom: 0,
+            background: "#18181b",
+            zIndex: 10,
+          }}
+        >
+          <button
+            onClick={onClose}
+            style={{
+              padding: "12px 24px",
+              background: "transparent",
+              border: "1px solid #3f3f46",
+              color: "#e4e4e7",
+              borderRadius: 12,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "'Tajawal', sans-serif",
+            }}
+          >
+            إلغاء
+          </button>
+          <button
+            onClick={handleSave}
+            style={{
+              padding: "12px 24px",
+              background: "#3b82f6",
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              cursor: "pointer",
+              fontFamily: "'Tajawal', sans-serif",
+            }}
+          >
             <Save size={18} /> حفظ الإعدادات
           </button>
         </div>
