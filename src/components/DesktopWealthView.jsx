@@ -13,7 +13,7 @@ const mockSpendingData = [
 
 export default function DesktopWealthView() {
   const [linkToken, setLinkToken] = useState(null);
-  const [balance, setBalance] = useState("$4,250.00");
+  const [balance, setBalance] = useState("CAD 4,250.00");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function DesktopWealthView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ public_token }),
       });
-      setBalance("$9,540.20");
+      setBalance("CAD 9,540.20");
     } catch (err) {}
     setLoading(false);
   }, []);
@@ -75,7 +75,7 @@ export default function DesktopWealthView() {
       <div style={{ background: "rgba(255,255,255,0.01)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.03)", padding: "20px 20px 0", height: 260 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ fontSize: 13, color: '#a1a1aa', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>Spending Velocity</div>
-          <div style={{ fontSize: 16, color: '#f59e0b', fontWeight: 800, fontFamily: "'JetBrains Mono'" }}>$1,770.00</div>
+          <div style={{ fontSize: 16, color: '#f59e0b', fontWeight: 800, fontFamily: "'JetBrains Mono'" }}>CAD 1,770.00</div>
         </div>
         <ResponsiveContainer width="100%" height="80%">
           <AreaChart data={mockSpendingData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
@@ -89,7 +89,7 @@ export default function DesktopWealthView() {
               cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }}
               contentStyle={{ background: 'rgba(24,24,27,0.8)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: '#fff' }}
               itemStyle={{ color: '#f59e0b', fontWeight: 'bold' }}
-              formatter={(val) => `$${val}`}
+              formatter={(val) => `CAD ${val}`}
             />
             <Area type="monotone" dataKey="amount" stroke="#f59e0b" strokeWidth={4} fillOpacity={1} fill="url(#colorSpendDesk)" animationDuration={1500} />
           </AreaChart>

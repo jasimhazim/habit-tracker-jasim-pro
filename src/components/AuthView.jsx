@@ -35,7 +35,14 @@ export default function AuthView({ onLogin }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      const data = await res.json();
+      
+      let data;
+      const textRes = await res.text();
+      try {
+        data = JSON.parse(textRes);
+      } catch (parseErr) {
+        throw new Error(`Server Error: ${textRes.slice(0, 50)}...`);
+      }
       
       if (!res.ok) throw new Error(data.error || 'Authentication failed');
 
@@ -106,6 +113,7 @@ export default function AuthView({ onLogin }) {
             <div className="fade-up" style={{ position: 'relative' }}>
               <User color="#71717a" size={20} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }} />
               <input 
+                aria-label="الاسم الكامل"
                 type="text" placeholder="الاسم الكامل" required value={name} onChange={e => setName(e.target.value)}
                 style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 48px 16px 16px', color: '#fff', fontSize: 15, outline: 'none', transition: 'border-color 0.2s', fontFamily: "'Tajawal', sans-serif" }}
                 onFocus={e => e.target.style.borderColor = '#6366f1'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
@@ -116,6 +124,7 @@ export default function AuthView({ onLogin }) {
           <div style={{ position: 'relative' }}>
             <Mail color="#71717a" size={20} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }} />
             <input 
+              aria-label="البريد الإلكتروني"
               type="email" placeholder="البريد الإلكتروني" required value={email} onChange={e => setEmail(e.target.value)}
               style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 48px 16px 16px', color: '#fff', fontSize: 15, outline: 'none', transition: 'border-color 0.2s', fontFamily: "'JetBrains Mono', sans-serif" }}
               onFocus={e => e.target.style.borderColor = '#6366f1'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
@@ -125,6 +134,7 @@ export default function AuthView({ onLogin }) {
           <div style={{ position: 'relative' }}>
             <Lock color="#71717a" size={20} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }} />
             <input 
+              aria-label="كلمة المرور"
               type="password" placeholder="كلمة المرور" required value={password} onChange={e => setPassword(e.target.value)}
               style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 48px 16px 16px', color: '#fff', fontSize: 15, outline: 'none', transition: 'border-color 0.2s', fontFamily: "'JetBrains Mono', sans-serif" }}
               onFocus={e => e.target.style.borderColor = '#6366f1'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
@@ -135,6 +145,7 @@ export default function AuthView({ onLogin }) {
             <div className="fade-up" style={{ position: 'relative' }}>
               <UploadCloud color="#71717a" size={20} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }} />
               <input 
+                aria-label="رابط الصورة الشخصية"
                 type="url" placeholder="رابط الصورة الشخصية (اختياري)" value={profilePic} onChange={e => setProfilePic(e.target.value)}
                 style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, padding: '16px 48px 16px 16px', color: '#fff', fontSize: 15, outline: 'none', transition: 'border-color 0.2s', fontFamily: "'JetBrains Mono', sans-serif" }}
                 onFocus={e => e.target.style.borderColor = '#6366f1'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}

@@ -81,10 +81,10 @@ export default function TrackerView({ updateStreak }) {
   const getDayScore = (dayIdx) => HABITS.reduce((sum, h) => sum + (data[`w${weekOffset}-${h.id}-${dayIdx}`] ? 1 : 0), 0);
 
   return (
-    <div className="fade-up-1">
+    <main className="fade-up-1">
       {/* Week Nav */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <button className="nav-btn" onClick={() => setWeekOffset((p) => p - 1)}>
+      <nav aria-label="Week Navigation" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <button className="nav-btn" aria-label="Previous week" onClick={() => setWeekOffset((p) => p - 1)}>
           &lt;
         </button>
         <div style={{ textAlign: "center" }}>
@@ -93,13 +93,13 @@ export default function TrackerView({ updateStreak }) {
             {isCurrentWeek && <span style={{ marginLeft: 6, fontSize: 9, color: "#10b981", background: "rgba(16,185,129,0.15)", padding: "2px 6px", borderRadius: 8, fontWeight: 700 }}>NOW</span>}
           </div>
         </div>
-        <button className="nav-btn" onClick={() => setWeekOffset((p) => Math.min(p + 1, 0))}>
+        <button className="nav-btn" aria-label="Next week" onClick={() => setWeekOffset((p) => Math.min(p + 1, 0))}>
           &gt;
         </button>
-      </div>
+      </nav>
 
       {/* Progress */}
-      <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 14, padding: "12px 14px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div role="progressbar" aria-valuenow={weeklyChecked} aria-valuemax={maxScore} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 14, padding: "12px 14px", marginBottom: 16, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
         <div style={{ flex: 1 }}>
           <div style={{ height: 6, background: "rgba(255,255,255,0.08)", borderRadius: 10, overflow: "hidden" }}>
             <div style={{
@@ -110,7 +110,7 @@ export default function TrackerView({ updateStreak }) {
           </div>
         </div>
         <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 18, fontWeight: 900, minWidth: 60, textAlign: "right", letterSpacing: -0.5 }}>
-          {totalChecked}<span style={{ fontSize: 11, fontWeight: 500, color: "#71717a" }}>/{maxScore}</span>
+          {weeklyChecked}<span style={{ fontSize: 11, fontWeight: 500, color: "#71717a" }}>/{maxScore}</span>
         </div>
       </div>
 
@@ -170,12 +170,16 @@ export default function TrackerView({ updateStreak }) {
                 {DAYS.map((_, dayIdx) => {
                   const cellKey = `${habit.id}-${dayIdx}`; const checked = !!data[cellKey]; const isToday = isCurrentWeek && dayIdx === todayDayIdx;
                   return (
-                    <div key={dayIdx} className={`check-btn ${animatingCell === cellKey ? "cell-anim" : ""}`}
+                    <button key={dayIdx} className={`check-btn ${animatingCell === cellKey ? "cell-anim" : ""}`}
+                      aria-label={`Toggle ${habit.name} for ${DAYS[dayIdx]}`}
+                      aria-checked={checked}
+                      role="switch"
                       onClick={() => toggle(habit.id, dayIdx)}
                       style={{
                         display: "flex", alignItems: "center", justifyContent: "center",
                         background: isToday ? "rgba(245,158,11,0.05)" : "transparent",
                         borderRight: dayIdx < 6 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                        borderTop: "none", borderLeft: "none", borderBottom: "none", cursor: "pointer", outline: "none"
                       }}
                     >
                       <div style={{
@@ -186,7 +190,7 @@ export default function TrackerView({ updateStreak }) {
                         fontSize: 12, transition: "all 0.2s",
                         boxShadow: checked ? "0 2px 8px rgba(0,0,0,0.3)" : "none",
                       }}>{checked && "✓"}</div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -206,7 +210,7 @@ export default function TrackerView({ updateStreak }) {
           {DAYS.map((_, i) => {
             const ds = getDayScore(i);
             return (
-              <div key={i} style={{
+              <div key={i} className={ds === 8 ? "day-perfect" : ""} style={{
                 textAlign: "center", padding: "10px 0", fontFamily: "'JetBrains Mono'", fontSize: 12, fontWeight: 700,
                 color: ds === 8 ? "#f59e0b" : ds >= 6 ? "#10b981" : ds >= 4 ? "#3b82f6" : "#71717a",
               }}>
@@ -237,6 +241,6 @@ export default function TrackerView({ updateStreak }) {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

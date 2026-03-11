@@ -2,7 +2,7 @@ import { User as UserIcon, LogOut, Settings } from 'lucide-react';
 
 export default function TopHeader({ streak, onLogout, onSettingsClick, user }) {
   return (
-    <div className="fade-up" style={{
+    <header className="fade-up" style={{
       display: "flex", justifyContent: "space-between", alignItems: "center",
       marginBottom: 16, paddingBottom: 16, borderBottom: "1px solid rgba(255,255,255,0.08)"
     }}>
@@ -44,22 +44,25 @@ export default function TopHeader({ streak, onLogout, onSettingsClick, user }) {
         
         {onSettingsClick && (
           <button 
+            aria-label="Open Settings"
             onClick={onSettingsClick}
-            style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, transition: 'color 0.2s' }}
+            style={{ background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, transition: 'color 0.2s', outlineOffset: '4px' }}
             onMouseOver={e => e.currentTarget.style.color = '#fff'} onMouseOut={e => e.currentTarget.style.color = '#a1a1aa'}
           >
             <Settings size={20} />
           </button>
         )}
 
-        <button onClick={async () => {
+        <button 
+          aria-label="Logout"
+          onClick={async () => {
           try { await window.storage?.set("tracker:auth", "false"); } catch (e) {}
           onLogout();
         }} style={{
           background: "transparent", border: "1px solid rgba(239, 68, 68, 0.3)", color: "#ef4444",
-          padding: "6px 12px", borderRadius: 10, fontSize: 12, cursor: "pointer", fontFamily: "'Tajawal', sans-serif", fontWeight: 700
+          padding: "6px 12px", borderRadius: 10, fontSize: 12, cursor: "pointer", fontFamily: "'Tajawal', sans-serif", fontWeight: 700, outlineOffset: '4px'
         }}>خروج</button>
       </div>
-    </div>
+    </header>
   );
 }

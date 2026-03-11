@@ -1,7 +1,43 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,500;9..40,700;9..40,800;9..40,900&family=JetBrains+Mono:wght@400;600;700&family=Tajawal:wght@400;500;700;800&display=swap');
 
+:root {
+  --color-bg: #09090b;
+  --color-surface: rgba(255,255,255,0.03);
+  --color-surface-hover: rgba(255,255,255,0.06);
+  --color-border: rgba(255,255,255,0.08);
+  --color-primary: #f59e0b;
+  --color-success: #10b981;
+  --color-info: #3b82f6;
+  --color-danger: #ef4444;
+  --color-text: #f4f4f5;
+  --color-text-muted: #a1a1aa;
+  --color-text-dim: #71717a;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 32px;
+  --font-display: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-arabic: 'Tajawal', sans-serif;
+}
+
 * { box-sizing: border-box; }
-body { margin: 0; background: #09090b; color: #f4f4f5; font-family: 'DM Sans', -apple-system, sans-serif; overflow-x: hidden; -webkit-tap-highlight-color: transparent;}
+body { margin: 0; background: var(--color-bg); color: var(--color-text); font-family: var(--font-display); overflow-x: hidden; -webkit-tap-highlight-color: transparent;}
+
+/* Focus rings for keyboard accessibility */
+button:focus-visible, [tabindex="0"]:focus-visible, input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Tab view transition animations */
+.tab-view-enter {
+  animation: tabFadeIn 0.3s ease-out both;
+}
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 @keyframes checkPop {
   0% { transform: scale(0.7); opacity: 0.5; }
@@ -22,8 +58,16 @@ body { margin: 0; background: #09090b; color: #f4f4f5; font-family: 'DM Sans', -
 
 .habit-row { transition: background 0.2s; }
 .habit-row:active { background: rgba(255,255,255,0.04) !important; }
-.check-btn { transition: transform 0.15s ease; cursor: pointer; touch-action: manipulation; }
+.check-btn { transition: transform 0.15s ease; cursor: pointer; touch-action: manipulation; min-width: 40px; min-height: 40px; }
 .check-btn:active { transform: scale(0.85); }
+
+/* Celebration glow for perfect day columns */
+@keyframes celebrationGlow {
+  0% { box-shadow: 0 0 0 rgba(245,158,11,0); }
+  50% { box-shadow: 0 0 20px rgba(245,158,11,0.4), 0 0 40px rgba(245,158,11,0.2); }
+  100% { box-shadow: 0 0 0 rgba(245,158,11,0); }
+}
+.day-perfect { animation: celebrationGlow 1.5s ease-in-out; }
 
 .app-wrapper {
   display: flex;

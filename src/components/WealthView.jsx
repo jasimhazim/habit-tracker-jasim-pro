@@ -13,7 +13,7 @@ const mockSpendingData = [
 
 export default function WealthView() {
   const [linkToken, setLinkToken] = useState(null);
-  const [balance, setBalance] = useState("$4,250.00");
+  const [balance, setBalance] = useState("CAD 4,250.00");
   const [loading, setLoading] = useState(false);
 
   // In production, fetch Link Token from Express Backend
@@ -42,7 +42,7 @@ export default function WealthView() {
         body: JSON.stringify({ public_token }),
       });
       // Simulate real balance fetch
-      setBalance("$9,540.20");
+      setBalance("CAD 9,540.20");
     } catch (err) {
       console.error(err);
     }
@@ -82,7 +82,7 @@ export default function WealthView() {
       {/* Spending Chart */}
       <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.05)", padding: "16px 16px 0", height: 220, marginBottom: 16 }}>
         <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Monthly Spend</div>
-        <div style={{ fontSize: 24, fontWeight: 800, color: '#f59e0b', fontFamily: "'JetBrains Mono'", marginBottom: 8 }}>$1,770.00</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: '#f59e0b', fontFamily: "'JetBrains Mono'", marginBottom: 8 }}>CAD 1,770.00</div>
         <ResponsiveContainer width="100%" height="60%">
           <AreaChart data={mockSpendingData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
             <defs>
@@ -94,7 +94,7 @@ export default function WealthView() {
             <Tooltip 
               contentStyle={{ background: 'rgba(9,9,11,0.9)', border: '1px solid #27272a', borderRadius: 8, color: '#fff' }}
               itemStyle={{ color: '#f59e0b', fontWeight: 'bold' }}
-              formatter={(val) => `$${val}`}
+              formatter={(val) => `CAD ${val}`}
             />
             <Area type="monotone" dataKey="amount" stroke="#f59e0b" strokeWidth={3} fillOpacity={1} fill="url(#colorSpend)" />
           </AreaChart>

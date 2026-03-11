@@ -12,7 +12,7 @@ const mockWeightData = [
 ];
 
 export default function HealthView() {
-  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "75" });
+  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "80" });
   const [calories, setCalories] = useState({ eaten: 0, goal: 2000 });
 
   useEffect(() => {
@@ -39,8 +39,11 @@ export default function HealthView() {
     load();
   }, []);
 
-  const addCalories = async () => {
-    const nextEaten = calories.eaten + 200;
+  const [customAmount, setCustomAmount] = useState(200);
+
+  const addCalories = async (amount) => {
+    if (!amount || isNaN(amount)) return;
+    const nextEaten = Math.max(0, calories.eaten + amount);
     setCalories(p => ({ ...p, eaten: nextEaten }));
     try {
       const token = localStorage.getItem('pro_token');
@@ -51,7 +54,7 @@ export default function HealthView() {
       });
     } catch (e) {
       console.error(e);
-      setCalories(p => ({ ...p, eaten: p.eaten - 200 }));
+      setCalories(p => ({ ...p, eaten: p.eaten - amount }));
     }
   };
 
@@ -73,10 +76,30 @@ export default function HealthView() {
               {calories.eaten} <span style={{ fontSize: 14, color: '#71717a', fontWeight: 500 }}>/ {calories.goal}</span>
             </div>
           </div>
-          <button 
-            onClick={addCalories}
-            style={{ background: '#10b981', color: '#000', border: 'none', borderRadius: 12, padding: '8px 16px', fontWeight: 800, cursor: 'pointer', fontFamily: "'JetBrains Mono'" }}>
-            +200
+        </div>
+
+        {/* Flexible Calorie Input */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+          {[100, 200, 300, 500].map(amt => (
+            <button key={amt} onClick={() => addCalories(amt)}
+              aria-label={`Add ${amt} calories`}
+              style={{ flex: 1, minWidth: 54, background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, padding: '8px 4px', fontWeight: 800, cursor: 'pointer', fontFamily: "'JetBrains Mono'", fontSize: 12 }}>
+              +{amt}
+            </button>
+          ))}
+          <button onClick={() => addCalories(-100)}
+            aria-label="Subtract 100 calories"
+            style={{ flex: 1, minWidth: 54, background: 'rgba(239,68,68,0.15)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '8px 4px', fontWeight: 800, cursor: 'pointer', fontFamily: "'JetBrains Mono'", fontSize: 12 }}>
+            −100
+          </button>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input type="number" value={customAmount} onChange={e => setCustomAmount(Number(e.target.value))}
+            aria-label="Custom calorie amount"
+            style={{ flex: 1, background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '8px 12px', color: '#fff', fontSize: 14, fontFamily: "'JetBrains Mono'", outline: 'none' }} />
+          <button onClick={() => addCalories(customAmount)}
+            style={{ background: '#10b981', color: '#000', border: 'none', borderRadius: 10, padding: '8px 16px', fontWeight: 800, cursor: 'pointer', fontFamily: "'JetBrains Mono'", fontSize: 13 }}>
+            Add
           </button>
         </div>
 

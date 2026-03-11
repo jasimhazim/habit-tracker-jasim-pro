@@ -21,7 +21,7 @@ export default function MobileApp({ user }) {
     <div className="app-container">
       <TopHeader streak={streak} user={user} onLogout={handleLogout} />
       
-      <div style={{ paddingBottom: '90px' }}>
+      <div key={activeTab} className="tab-view-enter" style={{ paddingBottom: '90px' }}>
         {activeTab === 'tracker' && <TrackerView updateStreak={setStreak} />}
         {activeTab === 'health' && <HealthView />}
         {activeTab === 'goals' && <GoalsView />}

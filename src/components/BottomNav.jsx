@@ -10,7 +10,7 @@ export default function BottomNav({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className="bottom-nav-container" style={{
+    <nav aria-label="Bottom Navigation" className="bottom-nav-container" style={{
       position: 'fixed',
       bottom: 0,
       left: 0,
@@ -32,6 +32,8 @@ export default function BottomNav({ activeTab, setActiveTab }) {
         return (
           <button
             key={tab.id}
+            aria-label={`Switch to ${tab.label} tab`}
+            aria-current={isActive ? "page" : undefined}
             onClick={() => setActiveTab(tab.id)}
             style={{
               background: 'transparent',
@@ -68,6 +70,6 @@ export default function BottomNav({ activeTab, setActiveTab }) {
           </button>
         )
       })}
-    </div>
+    </nav>
   );
 }

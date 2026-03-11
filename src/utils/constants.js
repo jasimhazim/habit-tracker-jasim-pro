@@ -1,5 +1,5 @@
 export const HABITS = [
-  { id: "gym", icon: "🏋️", name: "Gym", sub: "45 min min", priority: true },
+  { id: "gym", icon: "🏋️", name: "Gym", sub: "45 min minimum", priority: true },
   { id: "food", icon: "🥗", name: "Diet", sub: "1800–2000 cal", priority: true },
   { id: "study", icon: "📖", name: "Study", sub: "1hr library", priority: false },
   { id: "sleep", icon: "😴", name: "Sleep", sub: "11PM–6AM", priority: false },

@@ -363,8 +363,11 @@ ${JSON.stringify(context)}`;
         });
       }
       else if (action.type === 'check_habit') {
-        // Assume key format: "mon-gym" based on action.day and action.habit
-        const key = `${action.day.toLowerCase()}-${action.habit.toLowerCase()}`;
+        // Map day name to index matching DAYS array: Sat=0, Sun=1, Mon=2, Tue=3, Wed=4, Thu=5, Fri=6
+        const dayMap = { sat: 0, sun: 1, mon: 2, tue: 3, wed: 4, thu: 5, fri: 6 };
+        const dayIdx = dayMap[action.day.toLowerCase().slice(0, 3)] ?? 0;
+        const habitId = action.habit.toLowerCase();
+        const key = `w0-${habitId}-${dayIdx}`;
         await prisma.habitLog.upsert({
            where: { userId_key: { userId: req.userId, key } },
            update: { completed: true },

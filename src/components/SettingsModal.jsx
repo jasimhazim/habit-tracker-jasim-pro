@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Settings as SettingsIcon, X, Save, ShieldCheck, Image as ImageIcon } from 'lucide-react';
 
 export default function SettingsModal({ onClose }) {
-  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "75" });
+  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "80" });
   const [goals, setGoals] = useState({ 
     "health-yearly": "", "health-monthly": "",
     "fin-yearly": "", "fin-monthly": "",
@@ -137,7 +137,7 @@ export default function SettingsModal({ onClose }) {
 
           <div style={{ marginBottom: 32 }}>
             <h3 style={{ fontSize: 16, color: '#10b981', margin: '0 0 16px', borderBottom: '1px solid rgba(16,185,129,0.2)', paddingBottom: 8 }}>المقاييس المالية والتعليمية</h3>
-            <InputRow label="الميزانية الشهرية" type="number" value={budget} onChange={e => setBudget(e.target.value)} unit="$" />
+            <InputRow label="الميزانية الشهرية" type="number" value={budget} onChange={e => setBudget(e.target.value)} unit="CAD" />
             <InputRow label="هدف ساعات الدراسة" type="number" value={studyHours} onChange={e => setStudyHours(e.target.value)} unit="hrs" />
           </div>
 

@@ -12,7 +12,7 @@ const mockWeightData = [
 ];
 
 export default function DesktopHealthView() {
-  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "75" });
+  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "80" });
   const [calories, setCalories] = useState({ eaten: 0, goal: 2000 });
 
   useEffect(() => {

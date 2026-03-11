@@ -4,7 +4,7 @@ import { Target } from 'lucide-react';
 
 export default function DesktopSidebar() {
   const [goals, setGoals] = useState({});
-  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "75" });
+  const [weights, setWeights] = useState({ start: "85", current: "79.8", goal: "80" });
   const [calories, setCalories] = useState({ eaten: 1500, goal: 2000 });
   
   // Plaid Mock Data for Expenses Goal
@@ -113,8 +113,8 @@ export default function DesktopSidebar() {
           title="النفقات والميزانية" 
           desc="الاستهلاك من الميزانية"
           icon="💳" 
-          value={`$${currentSpend}`} 
-          target={`$${monthlyBudget}`} 
+          value={`CAD ${currentSpend}`} 
+          target={`CAD ${monthlyBudget}`} 
           pct={budgetUsedPct} 
           colorHex="#f59e0b" // Amber
         />
